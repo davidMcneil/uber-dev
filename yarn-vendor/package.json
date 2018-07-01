@@ -1,0 +1,18 @@
+{
+  "name": "yarn-vendor",
+  "version": "0.1.0",
+  "description": "Vendor yarn node modules.",
+  "author": "David McNeil",
+  "license": "(MIT OR Apache-2.0)",
+  "dependencies": {
+    "bulma": "^0.7.1",
+    "inferno": "^5.1.1"
+  },
+  "devDependencies": {
+    "babel-plugin-inferno": "^5.0.1",
+    "node-sass": "^4.9.0",
+    "parcel-bundler": "^1.9.2",
+    "tslint": "^5.10.0",
+    "typescript": "^2.9.2"
+  }
+}
