@@ -1,5 +1,5 @@
 crates-registry/
 npm-registry/
-crates-vendor/target
+cargo-vendor/target
 **/*.rs.bk
 yarn-vendor/node_modules
