@@ -33,8 +33,9 @@ WORKDIR ${HOME}
 USER developer
 RUN curl -o rustup.sh https://sh.rustup.rs -sS \
     && sh rustup.sh -y --no-modify-path \
-    && rustup install nightly \
     && rustup component add rls-preview rust-analysis rust-src \
+    && rustup install nightly \
+    && rustup component add --toolchain=nightly clippy-preview \
     && rm -f rustup.sh
 USER root
 

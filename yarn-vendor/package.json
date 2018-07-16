@@ -1,18 +1,37 @@
 {
-  "name": "yarn-vendor",
-  "version": "0.1.0",
-  "description": "Vendor yarn node modules.",
-  "author": "David McNeil",
-  "license": "(MIT OR Apache-2.0)",
-  "dependencies": {
-    "bulma": "^0.7.1",
-    "inferno": "^5.1.1"
-  },
-  "devDependencies": {
-    "babel-plugin-inferno": "^5.0.1",
-    "node-sass": "^4.9.0",
-    "parcel-bundler": "^1.9.2",
-    "tslint": "^5.10.0",
-    "typescript": "^2.9.2"
-  }
+    "name": "yarn-vendor",
+    "version": "0.1.0",
+    "description": "Vendor yarn node modules.",
+    "author": "David McNeil",
+    "license": "(MIT OR Apache-2.0)",
+    "dependencies": {
+        "babel-plugin-inferno": "^5.0.1",
+        "bluebird": "^3.5.1",
+        "bulma": "^0.7.1",
+        "classnames": "^2.2.6",
+        "incompose": "^3.0.0",
+        "inferno-animation": "^5.1.4",
+        "inferno-component": "^5.1.1",
+        "inferno-context-api-store": "^1.0.15",
+        "inferno-devtools": "^5.1.1",
+        "inferno-hyperscript": "^5.1.1",
+        "inferno-mobx": "^5.1.1",
+        "inferno-redux": "^5.3.0",
+        "inferno-router": "^5.1.1",
+        "inferno-server": "^5.1.1",
+        "inferno-shared": "^5.1.1",
+        "inferno-test-utils": "^5.1.1",
+        "inferno-vnode-flags": "^5.1.1",
+        "inferno": "^5.1.1",
+        "lodash": "^4.17.10",
+        "mobx": "^5.0.3",
+        "moment": "^2.22.2",
+        "node-sass": "^4.9.0",
+        "parcel-bundler": "^1.9.2",
+        "redux": "^4.0.0",
+        "request": "^2.87.0",
+        "tslint": "^5.10.0",
+        "typescript": "^2.9.2",
+        "underscore": "^1.9.1"
+    }
 }
