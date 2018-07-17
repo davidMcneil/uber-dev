@@ -11,13 +11,17 @@ ENV PATH=${HOME}/.cargo/bin:$PATH
 # Install required system libraries
 RUN apt-get update \
     && apt-get install -y \
-    curl \
+    ca-certificates \
     cmake \
+    curl \
+    gcc \
     git \
     libasound2 \
+    libc6-dev \
     libgtk2.0-0 \
     libssl-dev \
     libxss1 \
+    make \
     pkg-config \
     sudo \
     upx-ucl \
@@ -34,8 +38,10 @@ USER developer
 RUN curl -o rustup.sh https://sh.rustup.rs -sS \
     && sh rustup.sh -y --no-modify-path \
     && rustup component add rls-preview rust-analysis rust-src \
+    && rustup target add x86_64-unknown-linux-musl \
     && rustup install nightly \
     && rustup component add --toolchain=nightly clippy-preview \
+    && rustup target add --toolchain=nightly x86_64-unknown-linux-musl \
     && rm -f rustup.sh
 USER root
 
@@ -54,8 +60,9 @@ RUN apt-get update \
     && rm -f vscode.deb \
     && rm -rf /var/lib/apt/lists/*
 
-# Install vscode extensions
 USER developer
+
+# Install vscode extensions
 RUN code --install-extension bungcip.better-toml
 RUN code --install-extension streetsidesoftware.code-spell-checker
 RUN code --install-extension msjsdiag.debugger-for-chrome
@@ -66,7 +73,6 @@ RUN code --install-extension rust-lang.rust
 RUN code --install-extension robinbentley.sass-indented
 RUN code --install-extension mrmlnc.vscode-scss
 RUN code --install-extension eg2.tslint
-USER root
 
 # Modify vscode settings
 COPY vscode_settings.json ${HOME}/.config/Code/User/settings.json
@@ -82,6 +88,19 @@ RUN echo "[source.crates-io]" >> .cargo/config \
 
 ### Install vendored npm
 COPY ${NPM_REGISTRY_PATH} ${HOME}/npm-registry
+
+USER root
+
+### Setup musl target
+COPY musl-setup/musl.sh musl-setup/openssl.sh /
+COPY musl-setup/musl-gcc.x86_64-unknown-linux-musl /usr/local/bin/musl-gcc
+COPY musl-setup/musl-gcc.specs.x86_64-unknown-linux-musl /usr/local/lib/musl-gcc.specs
+RUN bash /musl.sh 1.1.15 && \
+    bash /openssl.sh linux-x86_64 musl- -static
+ENV CC_x86_64_unknown_linux_musl=musl-gcc \
+    OPENSSL_DIR=/openssl \
+    OPENSSL_INCLUDE_DIR=/openssl/include \
+    OPENSSL_LIB_DIR=/openssl/lib
 
 WORKDIR ${HOME}/project
 
