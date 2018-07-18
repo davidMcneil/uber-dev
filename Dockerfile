@@ -23,6 +23,7 @@ RUN apt-get update \
     libxss1 \
     make \
     pkg-config \
+    rpm \
     sudo \
     upx-ucl \
     zlib1g-dev \
@@ -37,12 +38,31 @@ WORKDIR ${HOME}
 USER developer
 RUN curl -o rustup.sh https://sh.rustup.rs -sS \
     && sh rustup.sh -y --no-modify-path \
-    && rustup component add rls-preview rust-analysis rust-src \
-    && rustup target add x86_64-unknown-linux-musl \
-    && rustup install nightly \
-    && rustup component add --toolchain=nightly clippy-preview \
-    && rustup target add --toolchain=nightly x86_64-unknown-linux-musl \
     && rm -f rustup.sh
+RUN rustup component add rls-preview rust-analysis rust-src
+RUN rustup target add x86_64-unknown-linux-musl
+RUN rustup install nightly
+RUN rustup component add --toolchain=nightly clippy-preview
+RUN rustup target add --toolchain=nightly x86_64-unknown-linux-musl
+RUN RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin \
+    && cargo install \
+    cargo-asm \
+    cargo-audit \
+    cargo-benchcmp \
+    cargo-bloat \
+    cargo-count \
+    cargo-deadlinks \
+    cargo-deb \
+    cargo-expand \
+    cargo-fuzz \
+    cargo-graph \
+    cargo-make \
+    cargo-rpm \
+    cargo-script \
+    cargo-tree \
+    cargo-vendor \
+    cargo-watch \
+    && rm -rf ~/.cargo/registry
 USER root
 
 # Install yarn
@@ -101,6 +121,9 @@ ENV CC_x86_64_unknown_linux_musl=musl-gcc \
     OPENSSL_DIR=/openssl \
     OPENSSL_INCLUDE_DIR=/openssl/include \
     OPENSSL_LIB_DIR=/openssl/lib
+
+# Increase max file handles
+RUN echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
 WORKDIR ${HOME}/project
 
