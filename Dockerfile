@@ -22,7 +22,10 @@ RUN apt-get update \
     libssl-dev \
     libxss1 \
     make \
+    nano \
+    npm \
     pkg-config \
+    python \
     rpm \
     sudo \
     upx-ucl \
@@ -32,10 +35,12 @@ RUN apt-get update \
 # Add a user "developer" with password "password" 
 RUN useradd --create-home --shell /bin/bash -g root -G sudo developer \
     && echo 'developer:password' | chpasswd
+
 WORKDIR ${HOME}
 
-# Install rust through rustup
 USER developer
+
+# Install rust through rustup
 RUN curl -o rustup.sh https://sh.rustup.rs -sS \
     && sh rustup.sh -y --no-modify-path \
     && rm -f rustup.sh
@@ -63,14 +68,25 @@ RUN RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin \
     cargo-vendor \
     cargo-watch \
     && rm -rf ~/.cargo/registry
+
 USER root
+
+### Setup musl target
+COPY musl-setup/musl.sh musl-setup/openssl.sh /
+COPY musl-setup/musl-gcc.x86_64-unknown-linux-musl /usr/local/bin/musl-gcc
+COPY musl-setup/musl-gcc.specs.x86_64-unknown-linux-musl /usr/local/lib/musl-gcc.specs
+RUN bash /musl.sh 1.1.15 && \
+    bash /openssl.sh linux-x86_64 musl- -static
+ENV CC_x86_64_unknown_linux_musl=musl-gcc \
+    OPENSSL_DIR=/openssl \
+    OPENSSL_INCLUDE_DIR=/openssl/include \
+    OPENSSL_LIB_DIR=/openssl/lib
 
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
     && apt-get update \ 
     && apt-get -y install yarn \
-    && yarn config set yarn-offline-mirror ${HOME}/npm-registry \
     && rm -rf /var/lib/apt/lists/*
 
 # Install vscode
@@ -95,10 +111,10 @@ RUN code --install-extension mrmlnc.vscode-scss
 RUN code --install-extension eg2.tslint
 
 # Modify vscode settings
-COPY vscode_settings.json ${HOME}/.config/Code/User/settings.json
+COPY --chown=developer:root vscode_settings.json ${HOME}/.config/Code/User/settings.json
 
 # Install vendored crates
-COPY ${CRATES_REGISTRY_PATH} ${HOME}/crates-registry
+COPY --chown=developer:root ${CRATES_REGISTRY_PATH} ${HOME}/crates-registry
 RUN echo "[source.crates-io]" >> .cargo/config \
     && echo "registry = 'https://github.com/rust-lang/crates.io-index'" >> .cargo/config \
     && echo "replace-with = 'local-registry'" >> .cargo/config \
@@ -107,20 +123,15 @@ RUN echo "[source.crates-io]" >> .cargo/config \
     && echo "local-registry = '/home/developer/crates-registry'" >> .cargo/config
 
 ### Install vendored npm
-COPY ${NPM_REGISTRY_PATH} ${HOME}/npm-registry
+COPY --chown=developer:root ${NPM_REGISTRY_PATH} ${HOME}/npm-registry
+COPY --chown=developer:root yarn-vendor/yarn.lock ${HOME}/npm/yarn.lock
+RUN yarn config set yarn-offline-mirror ${HOME}/npm-registry
+RUN curl -o ${HOME}/npm/linux-x64-47_binding.node https://github.com/sass/node-sass/releases/download/v4.9.2/linux-x64-47_binding.node
+RUN curl -L -o ${HOME}/npm/yarn-1.9.1.js https://github.com/yarnpkg/yarn/releases/download/v1.9.1/yarn-1.9.1.js
+RUN chmod +x ${HOME}/npm/yarn-1.9.1.js
+ENV SASS_BINARY_PATH $HOME/npm/linux-x64-47_binding.node
 
 USER root
-
-### Setup musl target
-COPY musl-setup/musl.sh musl-setup/openssl.sh /
-COPY musl-setup/musl-gcc.x86_64-unknown-linux-musl /usr/local/bin/musl-gcc
-COPY musl-setup/musl-gcc.specs.x86_64-unknown-linux-musl /usr/local/lib/musl-gcc.specs
-RUN bash /musl.sh 1.1.15 && \
-    bash /openssl.sh linux-x86_64 musl- -static
-ENV CC_x86_64_unknown_linux_musl=musl-gcc \
-    OPENSSL_DIR=/openssl \
-    OPENSSL_INCLUDE_DIR=/openssl/include \
-    OPENSSL_LIB_DIR=/openssl/lib
 
 # Increase max file handles
 RUN echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
