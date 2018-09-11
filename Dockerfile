@@ -109,6 +109,8 @@ RUN code --install-extension rust-lang.rust
 RUN code --install-extension robinbentley.sass-indented
 RUN code --install-extension mrmlnc.vscode-scss
 RUN code --install-extension eg2.tslint
+RUN code --install-extension ms-vscode.cpptools
+RUN code --install-extension wholroyd.hcl
 
 # Modify vscode settings
 COPY --chown=developer:root vscode_settings.json ${HOME}/.config/Code/User/settings.json
@@ -126,10 +128,16 @@ RUN echo "[source.crates-io]" >> .cargo/config \
 COPY --chown=developer:root ${NPM_REGISTRY_PATH} ${HOME}/npm-registry
 COPY --chown=developer:root yarn-vendor/yarn.lock ${HOME}/npm/yarn.lock
 RUN yarn config set yarn-offline-mirror ${HOME}/npm-registry
-RUN curl -o ${HOME}/npm/linux-x64-47_binding.node https://github.com/sass/node-sass/releases/download/v4.9.2/linux-x64-47_binding.node
-RUN curl -L -o ${HOME}/npm/yarn-1.9.1.js https://github.com/yarnpkg/yarn/releases/download/v1.9.1/yarn-1.9.1.js
-RUN chmod +x ${HOME}/npm/yarn-1.9.1.js
-ENV SASS_BINARY_PATH $HOME/npm/linux-x64-47_binding.node
+RUN curl -L -o ${HOME}/npm/binding.node https://github.com/sass/node-sass/releases/download/v4.9.3/linux-x64-57_binding.node
+ENV SASS_BINARY_PATH $HOME/npm/binding.node
+RUN mkdir ${HOME}/bin
+RUN curl -L -o ${HOME}/bin/yarn.js https://github.com/yarnpkg/yarn/releases/download/v1.9.4/yarn-1.9.4.js
+RUN chmod +x ${HOME}/bin/yarn.js
+
+# Add script to copy vendored node-sass
+RUN echo "mkdir -p node_modules/node-sass/vendor/linux-x64-57" >> ${HOME}/bin/install_node_sass \
+    && echo "cp ${HOME}/npm/binding.node node_modules/node-sass/vendor/linux-x64-57" >> ${HOME}/bin/install_node_sass
+RUN chmod +x ${HOME}/bin/install_node_sass
 
 USER root
 
