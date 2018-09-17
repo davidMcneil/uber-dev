@@ -12,6 +12,9 @@ ENV PATH=${HOME}/.cargo/bin:$PATH
 RUN apt-get update \
     && apt-get install -y \
     ca-certificates \
+    chromium-browser \
+    clang \
+    clang-format \
     cmake \
     curl \
     gcc \
@@ -45,33 +48,12 @@ RUN curl -o rustup.sh https://sh.rustup.rs -sS \
     && sh rustup.sh -y --no-modify-path \
     && rm -f rustup.sh
 RUN rustup component add rls-preview rust-analysis rust-src
+RUN rustup component add clippy-preview
 RUN rustup target add x86_64-unknown-linux-musl
-RUN rustup install nightly
-RUN rustup component add --toolchain=nightly clippy-preview
-RUN rustup target add --toolchain=nightly x86_64-unknown-linux-musl
-RUN RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin \
-    && cargo install \
-    cargo-asm \
-    cargo-audit \
-    cargo-benchcmp \
-    cargo-bloat \
-    cargo-count \
-    cargo-deadlinks \
-    cargo-deb \
-    cargo-expand \
-    cargo-fuzz \
-    cargo-graph \
-    cargo-make \
-    cargo-rpm \
-    cargo-script \
-    cargo-tree \
-    cargo-vendor \
-    cargo-watch \
-    && rm -rf ~/.cargo/registry
 
 USER root
 
-### Setup musl target
+# Install dependencies for musl target
 COPY musl-setup/musl.sh musl-setup/openssl.sh /
 COPY musl-setup/musl-gcc.x86_64-unknown-linux-musl /usr/local/bin/musl-gcc
 COPY musl-setup/musl-gcc.specs.x86_64-unknown-linux-musl /usr/local/lib/musl-gcc.specs
@@ -124,7 +106,7 @@ RUN echo "[source.crates-io]" >> .cargo/config \
     && echo "[source.local-registry]" >> .cargo/config \
     && echo "local-registry = '/home/developer/crates-registry'" >> .cargo/config
 
-### Install vendored npm
+# Install vendored npm
 COPY --chown=developer:root ${NPM_REGISTRY_PATH} ${HOME}/npm-registry
 COPY --chown=developer:root yarn-vendor/yarn.lock ${HOME}/npm/yarn.lock
 RUN yarn config set yarn-offline-mirror ${HOME}/npm-registry
